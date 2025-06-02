@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: helloworld
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: helloworld
@@ -17,8 +17,6 @@ spec:
         image: nginxdemos/hello
         ports:
         - containerPort: 80
-    nodeSelector:
-        role: Worker  # Пода будет размещена только на нодах с этой меткой
 ---
 apiVersion: v1
 kind: Service
