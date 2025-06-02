@@ -1,1 +1,40 @@
-скоро тут что нибудь будет
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: test 
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      labels:
+        app: test 
+    spec:
+      containers:
+      - name: test 
+        image: nginxdemos/hello
+        ports:
+        - containerPort: 80
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: worker
+                operator: In
+                values: ["true"]
+---
+apiVersion: v1  
+kind: Service
+metadata:
+  name: test  
+spec:
+  selector:
+    app: test  
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
