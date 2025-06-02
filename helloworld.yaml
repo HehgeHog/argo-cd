@@ -23,7 +23,7 @@ spec:
             nodeSelectorTerms:
             - matchExpressions:
               - key: worker       # Проверяем метку `worker`
-                operator: In      # Оператор "равно одному из значений"
+                operator: In      
                 values: ["true"]  # Значение должно быть "true"
 ---
 apiVersion: v1
