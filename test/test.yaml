@@ -1,40 +1,165 @@
-apiVersion: apps/v1 
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: test 
+  name: counter-backend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: test
+      app: counter-backend
   template:
     metadata:
       labels:
-        app: test 
+        app: counter-backend
     spec:
       containers:
-      - name: test 
-        image: nginxdemos/hello
+      - name: backend
+        image: node:18
+        workingDir: /app/backend
+        command: ["sh", "-c", "npm install && npm start"]
         ports:
-        - containerPort: 80
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: worker
-                operator: In
-                values: ["true"]
+        - containerPort: 3000
+        env:
+        - name: REDIS_HOST
+          value: "counter-redis"
+        volumeMounts:
+        - name: app-volume
+          mountPath: /app
+      volumes:
+      - name: app-volume
+        configMap:
+          name: counter-app-files
 ---
-apiVersion: v1  
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: counter-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: counter-redis
+  template:
+    metadata:
+      labels:
+        app: counter-redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7
+        ports:
+        - containerPort: 6379
+---
+apiVersion: v1
 kind: Service
 metadata:
-  name: test  
+  name: counter-backend
 spec:
   selector:
-    app: test  
+    app: counter-backend
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 80
+      targetPort: 3000
   type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: counter-redis
+spec:
+  selector:
+    app: counter-redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: counter-app-files
+data:
+  "backend/server.js": |
+    const express = require('express');
+    const redis = require('redis');
+    const app = express();
+    const client = redis.createClient({
+        host: process.env.REDIS_HOST || 'redis'
+    });
+
+    client.on('error', (err) => console.log('Redis error:', err));
+
+    app.use(express.static('../frontend'));
+    app.use(express.json());
+
+    app.get('/api/counter', (req, res) => {
+        client.get('counter', (err, reply) => {
+            res.json({ value: reply || 0 });
+        });
+    });
+
+    app.post('/api/counter', (req, res) => {
+        client.incr('counter', (err, reply) => {
+            res.json({ value: reply });
+        });
+    });
+
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  "backend/package.json": |
+    {
+        "name": "counter-backend",
+        "version": "1.0.0",
+        "scripts": {
+            "start": "node server.js"
+        },
+        "dependencies": {
+            "express": "^4.18.2",
+            "redis": "^4.6.5"
+        }
+    }
+  "frontend/index.html": |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Counter App</title>
+        <script src="script.js"></script>
+    </head>
+    <body>
+        <h1>Counter: <span id="counter">0</span></h1>
+        <button onclick="increment()">Click me!</button>
+    </body>
+    </html>
+  "frontend/script.js": |
+    async function increment() {
+        const response = await fetch('/api/counter', { method: 'POST' });
+        const data = await response.json();
+        document.getElementById('counter').innerText = data.value;
+    }
+
+    // Initial load
+    fetch('/api/counter')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('counter').innerText = data.value;
+        });
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: counter-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: counter-backend
+            port:
+              number: 80
