@@ -17,6 +17,15 @@ spec:
         image: nginxdemos/hello
         ports:
         - containerPort: 80
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:  # Жесткое требование
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role       # Проверяем метку
+                operator: In         # "In" означает, что значение должно быть в списке
+                values:
+                - worker            # Допустимые значения метки
 ---
 apiVersion: v1
 kind: Service
