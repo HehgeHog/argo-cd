@@ -18,7 +18,7 @@ spec:
         ports:
         - containerPort: 80
     nodeSelector:
-        role: worker  # Пода будет размещена только на нодах с этой меткой
+        role: Worker  # Пода будет размещена только на нодах с этой меткой
 ---
 apiVersion: v1
 kind: Service
