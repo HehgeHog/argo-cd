@@ -19,13 +19,12 @@ spec:
         - containerPort: 80
       affinity:
         nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:  # Жесткое требование
+          requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: node-role       # Проверяем метку
-                operator: In         # "In" означает, что значение должно быть в списке
-                values:
-                - worker            # Допустимые значения метки
+              - key: worker       # Проверяем метку `worker`
+                operator: In      # Оператор "равно одному из значений"
+                values: ["true"]  # Значение должно быть "true"
 ---
 apiVersion: v1
 kind: Service
