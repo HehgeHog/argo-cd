@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simple-counter-html
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Simple Counter</title>
+      <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; }
+        .counter { font-size: 3rem; margin: 20px; }
+        button { padding: 12px 24px; font-size: 1.2rem; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px; }
+      </style>
+    </head>
+    <body>
+      <h1>Simple Counter</h1>
+      <div class="counter" id="counter">0</div>
+      <button id="increment-btn">Click Me!</button>
+      <script>
+        let count = 0;
+        document.getElementById('increment-btn').addEventListener('click', () => {
+          count++;
+          document.getElementById('counter').textContent = count;
+        });
+      </script>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simple-counter-nginx
+data:
+  nginx.conf: |
+    server {
+      listen 80;
+      server_name localhost;
+      location / {
+        root /usr/share/nginx/html;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+      }
+    }
