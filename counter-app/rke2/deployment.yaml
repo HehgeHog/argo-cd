@@ -2,8 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: simple-counter
+  labels:
+    app: simple-counter
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: simple-counter
@@ -26,7 +28,7 @@ spec:
       volumes:
       - name: web-content
         configMap:
-          name: web-content
+          name: simple-counter-content
       - name: nginx-config
         configMap:
-          name: nginx-config
+          name: simple-counter-nginx-config
