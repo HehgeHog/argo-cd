@@ -2,4 +2,4 @@
 
 helloworld.yaml - создает hello-world-nginx приложения
 test - ветка для отработки вариантов
-simple-counter - сайт с кнопкой
+simple-counter - ветка сайта с кнопкой
