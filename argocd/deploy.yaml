@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pas-cloud-prod
-  namespace: pas-cloud-prod
+  namespace: levonenko-test
 spec:
   replicas: 1
   selector:
