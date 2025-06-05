@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pas-cloud-prod
+  namespace: pas-cloud-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pas-cloud-prod
+  template:
+    metadata:
+      labels:
+        app: pas-cloud-prod
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: worker
+                operator: In
+                values: ["true"]
+      containers:
+      - name: app
+        image: mcmega/pas-cloud:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 2005
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pas-cloud-nodeport
+  namespace: pas-cloud-prod
+spec:
+  type: NodePort
+  selector:
+    app: pas-cloud-prod
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 2005
+      nodePort: 31005
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pas-cloud-ingress
+  namespace: pas-cloud-prod
+spec:
+  rules:
+    - host: pas-cloud.example.com  # Замените на ваш домен
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pas-cloud-nodeport
+                port:
+                  number: 80
