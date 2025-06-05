@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simple-counter-api
+data:
+  server.js: |
+    const express = require('express');
+    const fs = require('fs');
+    const path = require('path');
+
+    const app = express();
+    const port = 3000;
+    const dataPath = path.join('/data', 'counter-data.json');
+
+    // Ensure data directory exists
+    if (!fs.existsSync('/data')) {
+      fs.mkdirSync('/data');
+    }
+
+    // Initialize data file if it doesn't exist
+    if (!fs.existsSync(dataPath)) {
+      fs.writeFileSync(dataPath, JSON.stringify({ maxCount: 0 }));
+    }
+
+    app.use(express.json());
+
+    // Get max count
+    app.get('/api/max-count', (req, res) => {
+      try {
+        const data = JSON.parse(fs.readFileSync(dataPath));
+        res.json(data);
+      } catch (error) {
+        console.error('Error reading max count:', error);
+        res.status(500).json({ error: 'Failed to read max count' });
+      }
+    });
+
+    // Update max count
+    app.post('/api/max-count', (req, res) => {
+      try {
+        fs.writeFileSync(dataPath, JSON.stringify(req.body));
+        res.json({ success: true });
+      } catch (error) {
+        console.error('Error saving max count:', error);
+        res.status(500).json({ error: 'Failed to save max count' });
+      }
+    });
+
+    app.listen(port, () => {
+      console.log(`Counter API server running on port ${port}`);
+    });
+  package.json: |
+    {
+      "name": "counter-api",
+      "version": "1.0.0",
+      "main": "server.js",
+      "dependencies": {
+        "express": "^4.18.2"
+      },
+      "scripts": {
+        "start": "node server.js"
+      }
+    }

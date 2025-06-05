@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-counter
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: simple-counter
+  template:
+    metadata:
+      labels:
+        app: simple-counter
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: worker
+                operator: In
+                values: ["true"]
+      containers:
+      - name: web
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: web-content
+          mountPath: /usr/share/nginx/html
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: nginx.conf
+      - name: api
+        image: node:18-alpine
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: api-script
+          mountPath: /app
+        - name: api-data
+          mountPath: /data
+        workingDir: /app
+        command: ["sh", "-c"]
+        args:
+          - npm install && npm start
+      volumes:
+      - name: web-content
+        configMap:
+          name: simple-counter-html
+      - name: nginx-config
+        configMap:
+          name: simple-counter-nginx
+      - name: api-script
+        configMap:
+          name: simple-counter-api
+      - name: api-data
+        persistentVolumeClaim:
+          claimName: simple-counter-pvc
