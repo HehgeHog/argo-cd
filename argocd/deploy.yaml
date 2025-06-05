@@ -39,6 +39,6 @@ spec:
     app: pas-cloud-prod
   ports:
     - protocol: TCP
-      port: 2005
-      targetPort: 80
+      port: 80
+      targetPort: 2005
   type: ClusterIP
