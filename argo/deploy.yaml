@@ -60,7 +60,7 @@ metadata:
   namespace: pas-cloud-prod
 spec:
   rules:
-    - host: pas-cloud.example.com  # Замените на ваш домен
+    - host: cloud.poe-gw.keenetic.pro
       http:
         paths:
           - path: /
